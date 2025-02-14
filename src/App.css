@@ -4,3 +4,21 @@
   padding: 2rem;
   text-align: center;
 }
+
+ul {
+  list-style-type: none;
+}
+
+li {
+  margin: 1rem;
+}
+
+.food-item {
+  display: flex;
+  gap: 1rem;
+}
+
+.info {
+  display: inline-block;
+  text-align: left;
+}
