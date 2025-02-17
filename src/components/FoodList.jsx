@@ -7,6 +7,7 @@ function FoodListItem({ item, onDelete }) {
     <div className="food-item">
       <img src={imgUrl} alt={title} width={200} />
       <div className="info">
+        <div>{item.id}</div>
         <div>{title}</div>
         <div>칼로리: {calorie}</div>
         <div>{content}</div>

@@ -1,38 +1,81 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import FoodList from "./components/FoodList";
-// import mockItems from "./mocks/mock.json";
 import { getFoods } from "./api";
+import FoodForm from "./components/FoodForm";
+
+const LIMIT = 10;
 
 function App() {
   const [items, setItems] = useState([]);
-  const [sortOrder, setSortOrder] = useState("createdAt");
-  const sortedItems = items.sort((a, b) => b[sortOrder] - a[sortOrder]);
+  const [order, setOrder] = useState("createdAt");
+  const [nextCursor, setNextCursor] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingError, setLoadingError] = useState(null);
+  const [search, setSearch] = useState("");
+  const sortedItems = items.sort((a, b) => b[order] - a[order]);
 
-  const handleClick = (order) => setSortOrder(order);
+  const handleNewestClick = () => setOrder("createdAt");
+
+  const handleCalorieClick = () => setOrder("calorie");
 
   const handleDelete = (id) => {
     const nextItems = items.filter((item) => item.id !== id);
     setItems(nextItems);
   };
 
-  const handleDataLoad = async (query) => {
-    const { foods } = await getFoods(query);
-    setItems(foods);
+  const handleDataLoad = async (options) => {
+    let result;
+
+    try {
+      setIsLoading(true);
+      result = await getFoods(options);
+    } catch (error) {
+      setLoadingError(error);
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+    const { foods, paging } = result;
+    if (!options.cursor) {
+      setItems(foods);
+    } else {
+      setItems((prevItems) => [...prevItems, ...foods]);
+    }
+    setNextCursor(paging.nextCursor);
+  };
+
+  const handleLoadMore = () => {
+    handleDataLoad({ order: order, cursor: nextCursor, limit: LIMIT });
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setSearch(e.target["search"].value);
   };
 
   useEffect(() => {
-    handleDataLoad(sortOrder);
-  }, [sortOrder]);
+    handleDataLoad({ order, search: search });
+  }, [order, search]);
 
   return (
     <>
       <div className="sort-options">
-        <button onClick={() => handleClick("createdAt")}>최신순</button>
-        <button onClick={() => handleClick("calorie")}>칼로리순</button>
+        <button onClick={handleNewestClick}>최신순</button>
+        <button onClick={handleCalorieClick}>칼로리순</button>
       </div>
+      <form onSubmit={handleSearchSubmit}>
+        <input name="search" type="text" />
+        <button type="submit">검색</button>
+      </form>
+      <FoodForm />
       <FoodList items={sortedItems} onDelete={handleDelete} />
-      {/* <button onClick={handleDataLoad}>불러오기</button> */}
+      {nextCursor && (
+        <button disabled={isLoading} onClick={handleLoadMore}>
+          더 보기
+        </button>
+      )}
+      {loadingError?.message && <span>{loadingError.message}</span>}
     </>
   );
 }
