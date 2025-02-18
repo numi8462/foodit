@@ -1,49 +1,100 @@
 import { useState } from "react";
+import { createFood } from "../api";
+import FileInput from "./FileInput";
 import "./FoodForm.css";
 
-function FoodForm() {
-  const [values, setValues] = useState({
-    title: "",
-    calorie: 0,
-    content: "",
-  });
+function sanitize(type, value) {
+  switch (type) {
+    case "number":
+      return Number(value) || 0;
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+    default:
+      return value;
+  }
+}
+
+const INITIAL_VALUES = {
+  imgFile: null,
+  title: "",
+  calorie: 0,
+  content: "",
+};
+
+function FoodForm({
+  initialValues = INITIAL_VALUES,
+  initialPreview,
+  onSubmitSuccess,
+  onCancel,
+  onSubmit,
+}) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingError, setSubmittingError] = useState(null);
+  const [values, setValues] = useState(initialValues);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append("imgFile", values.imgFile);
+    formData.append("title", values.title);
+    formData.append("calorie", values.calorie);
+    formData.append("content", values.content);
+    let result;
+    try {
+      setSubmittingError(null);
+      setIsSubmitting(true);
+      result = await onSubmit(formData);
+    } catch (error) {
+      setSubmittingError(error);
+      return;
+    } finally {
+      setIsSubmitting(false);
+    }
+    const { food } = result;
+    onSubmitSuccess(food);
+    setValues(INITIAL_VALUES);
+  };
+
+  const handleChange = (name, value) => {
     setValues((prevValues) => ({
       ...prevValues,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(values);
+  const handleInputChange = (e) => {
+    const { name, value, type } = e.target;
+    handleChange(name, sanitize(type, value));
   };
 
   return (
-    <form className="food-form">
-      <input
-        name="title"
-        type="text"
-        value={values.title}
+    <form className="food-form" onSubmit={handleSubmit}>
+      <FileInput
+        name="imgFile"
+        value={values.imgFile}
+        initialPreview={initialPreview}
         onChange={handleChange}
       />
+      <input name="title" value={values.title} onChange={handleInputChange} />
       <input
-        name="calorie"
         type="number"
+        name="calorie"
         value={values.calorie}
-        onChange={handleChange}
+        onChange={handleInputChange}
       />
-      <textarea
+      <input
         name="content"
-        type="text"
         value={values.content}
-        onChange={handleChange}
+        onChange={handleInputChange}
       />
-      <button type="submit" onClick={handleSubmit}>
+      {onCancel && (
+        <button type="button" onClick={onCancel}>
+          취소
+        </button>
+      )}
+      <button type="submit" disabled={isSubmitting}>
         확인
       </button>
+      {submittingError && <p>{submittingError.message}</p>}
     </form>
   );
 }
