@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import "./FileInput.css";
+import useTranslate from "../hooks/useTranslate";
 function FileInput({ name, value, initialPreview, onChange }) {
+  const t = useTranslate();
   const [preview, setPreview] = useState(initialPreview);
   const ref = useRef();
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const handleChange = (e) => {
     const nextImage = e.target.files[0];
     onChange(name, nextImage);
-    console.log(ref);
+    setSelectedFile(nextImage);
   };
 
   const handleClearClick = () => {
@@ -17,7 +20,12 @@ function FileInput({ name, value, initialPreview, onChange }) {
     } else {
       inputNode.value = "";
       onChange(name, null);
+      setSelectedFile(null);
     }
+  };
+
+  const handleButtonClick = () => {
+    ref.current.click();
   };
 
   useEffect(() => {
@@ -39,7 +47,9 @@ function FileInput({ name, value, initialPreview, onChange }) {
         </div>
       )}
       <div className="file-input">
-        <input type="file" onChange={handleChange} ref={ref} />
+        <button onClick={handleButtonClick}>{t("choose-file button")}</button>
+        <input id="file" type="file" onChange={handleChange} ref={ref} />
+        {selectedFile && <p>{selectedFile.name}</p>}
         {value && (
           <button type="button" onClick={handleClearClick}>
             X

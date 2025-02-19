@@ -3,7 +3,8 @@ import "./App.css";
 import FoodList from "./components/FoodList";
 import { deleteFood, getFoods, updateFood } from "./api";
 import FoodForm from "./components/FoodForm";
-import { LocaleContext } from "./components/contexts/LocaleContext";
+import { LocaleProvider } from "./contexts/LocaleContext";
+import LocaleSelect from "./components/LocaleSelect";
 
 const LIMIT = 10;
 
@@ -76,8 +77,9 @@ function App() {
   }, [order, search]);
 
   return (
-    <LocaleContext value={"ko"}>
+    <LocaleProvider defaultValue={"ko"}>
       <div>
+        <LocaleSelect />
         <div className="sort-options">
           <button onClick={handleNewestClick}>최신순</button>
           <button onClick={handleCalorieClick}>칼로리순</button>
@@ -100,7 +102,7 @@ function App() {
         )}
         {loadingError?.message && <span>{loadingError.message}</span>}
       </div>
-    </LocaleContext>
+    </LocaleProvider>
   );
 }
 
